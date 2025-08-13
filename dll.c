@@ -12,6 +12,7 @@ dll* dll_create(void) {
 }
 
 void dll_destroy(dll* ll) {
+    dll_head(ll); dll_tail(ll); // make sure up to date
     if (ll->_head == NULL) {
         assert(ll->_tail == NULL);
         free(ll);
@@ -70,6 +71,7 @@ node* dll_insert_after(node* n, void* val) {
 }
 
 node* dll_prepend(dll* ll, void* value) {
+    dll_head(ll);
     if (ll->_head == NULL) {
         assert(ll->_tail == NULL);
         ll->_head = malloc(sizeof(node));
@@ -89,6 +91,7 @@ node* dll_prepend(dll* ll, void* value) {
 }
 
 node* dll_append(dll* ll, void* value) {
+    dll_tail(ll);
     if (ll->_tail == NULL) {
         assert(ll->_head == NULL);
         ll->_tail = malloc(sizeof(node));
