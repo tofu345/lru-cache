@@ -4,7 +4,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-// dll node
+// https://stackoverflow.com/a/2672067
+//
+// "It's C after all, if people want to screw up, they should be allowed to" i agree
 typedef struct node node;
 struct node {
     void* value;
@@ -14,10 +16,10 @@ struct node {
 
 // Doubly Linked List
 typedef struct {
-    // ideally dont change these
-    // https://stackoverflow.com/a/2672067 "people should be allowed to screw up" i agree
-    node* head;
-    node* tail;
+    // dont touch this, use `dll_head`
+    node* _head;
+    // dont touch this, use `dll_tail`
+    node* _tail;
 } dll;
 
 dll* dll_create(void);
@@ -25,11 +27,22 @@ dll* dll_create(void);
 // Free all allocated nodes, but not values.
 void dll_destroy(dll* ll);
 
+// Retrieve head of dll. This is provided in case operations individual nodes
+// leave `ll._head` incorrect
+node* dll_head(dll* ll);
+
+// Retrieve tail of dll. This is provided in case operations individual nodes
+// leave `ll._tail` incorrect
+node* dll_tail(dll* ll);
+
 // Prepend node with `value` to head of dll. Returns NULL if out of memory
 node* dll_prepend(dll* ll, void* value);
 
 // Append node with `value` to tail of dll. Returns NULL if out of memory
 node* dll_append(dll* ll, void* value);
+
+// Drop tail of dll. Returns NULL if empty
+void* dll_pop(dll* ll);
 
 // Find node from `cur` with value `value`, equality tested with `cmp`.
 // Returns NULL if not found
