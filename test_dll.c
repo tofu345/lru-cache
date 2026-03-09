@@ -4,117 +4,101 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
-void exit_nomem(void) {
-    fprintf(stderr, "out of memory\n");
+void fail(const char *format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	vfprintf(stderr, format, args);
+	va_end(args);
+	exit(1);
 }
 
-bool cmp_str(void* a, void* b) {
-    return strcmp((char*)a, (char*)b) == 0;
-}
-
-bool dll_is(dll* ll, char* expected[], int len) {
-    int i;
-    node* cur = ll->_head;
-    for (i = 0; i < len && cur; i++) {
-        if (!cmp_str(expected[i], cur->value))
+bool dll_is(doubly_linked_list *list, const char *expected[])
+{
+    node *cur = list->head;
+    for (; *expected != NULL && cur != NULL; expected++, cur = cur->next)
+	{
+        if (strcmp(*expected, (char *)cur->value) != 0)
             return false;
-        cur = cur->next;
     }
-    return i == len && cur == NULL;
+	return cur == NULL && *expected == NULL;
 }
 
-static void test_dll_prepend(void) {
-    dll* ll = dll_create();
+static void test_dll_insertion(void)
+{
+	doubly_linked_list *list = dll_new();
 
-    assert(dll_prepend(ll, "foo") != NULL);
-    assert(dll_prepend(ll, "foo") != NULL);
-    assert(dll_prepend(ll, "bar") != NULL);
-    assert(dll_length(ll) == 3);
+    assert(dll_prepend(list, "foo") != NULL);
+    assert(dll_prepend(list, "bar") != NULL);
+    assert(dll_prepend(list, "baz") != NULL);
 
-    char* expected[] = {
-        "bar", "foo", "foo"
-    };
-    int len = sizeof(expected) / sizeof(expected[0]);
-    assert(dll_is(ll, expected, len));
+    assert(dll_is(list, (const char *[]){ "baz", "bar", "foo", NULL }));
 
-    dll_destroy(ll);
+    assert(dll_append(list, "bar") != NULL);
+    assert(dll_append(list, "baz") != NULL);
+
+    assert(dll_is(list, (const char *[]){ "baz", "bar", "foo", "bar", "baz", NULL }));
+
+	dll_insert_after(list, list->head, "fizzbuzz");
+    assert(dll_is(list, (const char *[]){ "baz", "fizzbuzz", "bar", "foo", "bar", "baz", NULL }));
+
+	node *tail = dll_insert_after(list, list->tail, "buzzfizz");
+    assert(dll_is(list, (const char *[]){ "baz", "fizzbuzz", "bar", "foo", "bar", "baz", "buzzfizz", NULL }));
+	assert(tail == list->tail);
+
+    dll_free(list);
 }
 
-static void test_dll_append(void) {
-    dll* ll = dll_create();
+static void test_dll_removal(void)
+{
+    doubly_linked_list *list = dll_new();
 
-    assert(dll_append(ll, "foo") != NULL);
-    assert(dll_append(ll, "foo") != NULL);
-    assert(dll_append(ll, "bar") != NULL);
-    assert(dll_length(ll) == 3);
+	const char *values[] = { "foo", "bar", "baz", NULL };
+	for (const char **cur = values; *cur != NULL; cur++)
+	{
+		assert(dll_append(list, (void *)(*cur)) != NULL);
+	}
 
-    char* expected[] = {
-        "foo", "foo", "bar"
-    };
-    int len = sizeof(expected) / sizeof(expected[0]);
-    assert(dll_is(ll, expected, len));
+	node *baz = dll_find(list, (void *)values[2]);
+	assert(baz != NULL);
 
-    dll_destroy(ll);
+	dll_remove(list, baz);
+
+    assert(dll_is(list, (const char *[]){ "foo", "bar", NULL }));
+	assert(list->head->value == (void *)values[0]);
+	assert(list->tail->value == (void *)values[1]);
+
+	dll_remove(list, list->head);
+
+    assert(dll_is(list, (const char *[]){ "bar", NULL }));
+	assert(list->head->value == (void *)values[1]);
+	assert(list->tail->value == (void *)values[1]);
+
+	dll_remove(list, list->tail);
+
+    assert(dll_is(list, (const char *[]){ NULL }));
+	assert(list->head == NULL);
+	assert(list->tail == NULL);
+
+    dll_free(list);
 }
 
-static void test_dll_find_insert(void) {
-    dll* ll = dll_create();
-
-    assert(dll_append(ll, "foo") != NULL);
-    assert(dll_append(ll, "baz") != NULL);
-    assert(dll_append(ll, "baz") != NULL);
-    assert(dll_append(ll, "bar") != NULL);
-
-    node* baz1 = dll_find_from(ll->_head, "baz", cmp_str);
-    assert(baz1 != NULL);
-    assert(dll_insert_after(baz1, "bez") != NULL);
-    assert(dll_insert_before(baz1, "beez") != NULL);
-
-    char* expected[] = {
-        "foo", "beez", "baz", "bez", "baz", "bar"
-    };
-    int len = sizeof(expected) / sizeof(expected[0]);
-    assert(dll_is(ll, expected, len));
-
-    dll_destroy(ll);
-}
-
-static void test_dll_pop(void) {
-    dll* ll = dll_create();
-
-    assert(dll_append(ll, "foo") != NULL);
-    assert(dll_append(ll, "baz") != NULL);
-    assert(dll_append(ll, "baz") != NULL);
-    assert(dll_append(ll, "bar") != NULL);
-
-    char* tail = dll_pop(ll);
-    assert(tail != NULL && strcmp(tail, "bar") == 0);
-    assert(dll_length(ll) == 3);
-    assert(dll_pop(ll) != NULL);
-    assert(dll_pop(ll) != NULL);
-    assert(dll_pop(ll) != NULL);
-    assert(dll_length(ll) == 0);
-
-    dll_destroy(ll);
-}
-
-int main() {
+int main()
+{
     // my very own test suite :p
     struct test {
-        char* name;
+        char *name;
         void (*fn) (void);
+    } tests[] = {
+        { "insertion", test_dll_insertion },
+        { "removal", test_dll_removal },
+		{ NULL, NULL },
     };
-    struct test tests[] = {
-        { "prepend", test_dll_prepend },
-        { "append", test_dll_append },
-        { "find_insert", test_dll_find_insert },
-        { "pop", test_dll_pop },
-    };
-    size_t len = sizeof(tests) / sizeof(tests[0]);
-    for (size_t i = 0; i < len; i++) {
-        tests[i].fn();
-        printf("%-30s ok\n", tests[i].name);
+    for (struct test *cur = tests; cur->name != NULL; cur++) {
+        cur->fn();
+        printf("%-13s ok\n", cur->name);
     }
     printf("all tests passed\n");
 }

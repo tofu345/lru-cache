@@ -3,162 +3,117 @@
 #include <assert.h>
 #include <stdlib.h>
 
-dll* dll_create(void) {
-    dll* l = malloc(sizeof(dll));
-    if (l == NULL) return NULL;
-    l->_head = NULL;
-    l->_tail = NULL;
-    return l;
+doubly_linked_list *dll_new(void)
+{
+    return calloc(1, sizeof(doubly_linked_list));
 }
 
-void dll_destroy(dll* ll) {
-    dll_head(ll); dll_tail(ll); // make sure up to date
-    if (ll->_head == NULL) {
-        assert(ll->_tail == NULL);
-        free(ll);
+void dll_free(doubly_linked_list *list)
+{
+    if (list->head == NULL)
+	{
+        assert(list->tail == NULL);
+        free(list);
         return;
     }
 
-    node* cur = ll->_head;
-    while (cur->next != NULL) {
-        node* next = cur->next;
+    node *cur = list->head;
+    while (cur != NULL)
+	{
+        node *next = cur->next;
         free(cur);
         cur = next;
     }
-    free(ll);
+    free(list);
 }
 
-node* dll_head(dll* ll) {
-    if (ll->_head == NULL) return NULL;
-    while (ll->_head->prev != NULL) {
-        ll->_head = ll->_head->prev;
-    }
-    return ll->_head;
-}
-
-node* dll_tail(dll* ll) {
-    if (ll->_tail == NULL) return NULL;
-    while (ll->_tail->next != NULL) {
-        ll->_tail = ll->_tail->next;
-    }
-    return ll->_tail;
-}
-
-node* dll_insert_before(node* n, void* val) {
-    assert(n != NULL);
-    node* new = malloc(sizeof(node));
+node *dll_prepend(doubly_linked_list *list, void *value)
+{
+    node *new = malloc(sizeof(node));
     if (new == NULL) return NULL;
-    new->value = val;
-    new->prev = n->prev;
-    new->next = n;
-    if (n->prev != NULL)
-        n->prev->next = new;
-    n->prev = new;
-    return new;
+    new->value = value;
+	new->prev = NULL;
+
+    if (list->head == NULL)
+	{
+        assert(list->tail == NULL);
+		new->next = NULL;
+        list->tail = new;
+    }
+	else
+	{
+		new->next = list->head;
+		list->head->prev = new;
+	}
+
+	list->head = new;
+	return new;
 }
 
-node* dll_insert_after(node* n, void* val) {
-    assert(n != NULL);
-    node* new = malloc(sizeof(node));
+node *dll_append(doubly_linked_list *list, void *value)
+{
+    node *new = malloc(sizeof(node));
     if (new == NULL) return NULL;
-    new->value = val;
-    new->next = n->next;
-    new->prev = n;
-    if (n->next != NULL)
-        n->next->prev = new;
-    n->next = new;
-    return new;
+    new->value = value;
+	new->next = NULL;
+
+    if (list->tail == NULL)
+	{
+        assert(list->head == NULL);
+		new->prev = NULL;
+		list->head = new;
+    }
+	else
+	{
+		new->prev = list->tail;
+		list->tail->next = new;
+	}
+
+	list->tail = new;
+	return new;
 }
 
-node* dll_prepend(dll* ll, void* value) {
-    dll_head(ll);
-    if (ll->_head == NULL) {
-        assert(ll->_tail == NULL);
-        ll->_head = malloc(sizeof(node));
-        if (ll->_head == NULL) return NULL;
-        ll->_head->next = NULL;
-        ll->_head->prev = NULL;
-        ll->_head->value = value;
-
-        ll->_tail = ll->_head;
-        return ll->_head;
-    }
-
-    node* head = dll_insert_before(ll->_head, value);
-    if (head == NULL) return NULL;
-    ll->_head = head;
-    return head;
+node *dll_find(doubly_linked_list *list, void *value)
+{
+	node *cur = list->head;
+	while (cur != NULL)
+	{
+		if (cur->value == value) return cur;
+		cur = cur->next;
+	}
+	return NULL;
 }
 
-node* dll_append(dll* ll, void* value) {
-    dll_tail(ll);
-    if (ll->_tail == NULL) {
-        assert(ll->_head == NULL);
-        ll->_tail = malloc(sizeof(node));
-        if (ll->_tail == NULL) return NULL;
-        ll->_tail->next = NULL;
-        ll->_tail->prev = NULL;
-        ll->_tail->value = value;
+node *dll_insert_after(doubly_linked_list *list, node *n, void *value)
+{
+	assert(n != NULL);
 
-        ll->_head = ll->_tail;
-        return ll->_tail;
-    }
+    node *new = malloc(sizeof(node));
+    if (new == NULL) return NULL;
+    new->value = value;
+	new->prev = n;
+	new->next = n->next;
 
-    node* tail = dll_insert_after(ll->_tail, value);
-    if (tail == NULL) {
-        return NULL;
-    }
-    ll->_tail = tail;
-    return tail;
+	if (n->next != NULL)
+		n->next->prev = new;
+	else
+		list->tail = new;
+
+	n->next = new;
+	return new;
 }
 
-node* dll_find_from(node* cur, void* value, bool (*cmp) (void*, void*)) {
-    while (cur != NULL) {
-        if (cmp(cur->value, value)) {
-            return cur;
-        }
-        cur = cur->next;
-    }
-    return NULL;
-}
+void dll_remove(doubly_linked_list *list, node *n)
+{
+	if (n->prev != NULL)
+		n->prev->next = n->next;
+	else
+		list->head = n->next;
 
-size_t dll_length(dll* ll) {
-    size_t len = 0;
-    node* cur = ll->_head;
-    while (cur != NULL) {
-        len++;
-        cur = cur->next;
-    }
-    return len;
-}
+	if (n->next != NULL)
+		n->next->prev = n->prev;
+	else
+		list->tail = n->prev;
 
-void* dll_pop(dll* ll) {
-    dll_tail(ll); // in case of stupidity
-    if (ll->_tail == NULL) {
-        assert(ll->_head == NULL);
-        return NULL;
-    }
-    node* new_tail = ll->_tail->prev;
-    void* val = ll->_tail->value;
-    free(ll->_tail);
-    if (new_tail == NULL) {
-        ll->_head = new_tail;
-    } else {
-        new_tail->next = NULL;
-    }
-    ll->_tail = new_tail;
-    return val;
-}
-
-dlli dll_iterator(dll* ll) {
-    dlli it;
-    it._node = ll->_head;
-    return it;
-}
-
-bool dll_next(dlli* it) {
-    if (it->_node == NULL) return false;
-    it->value = it->_node->value;
-    it->_node = it->_node->next;
-    return true;
+	free(n);
 }

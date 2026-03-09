@@ -4,72 +4,29 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-// https://stackoverflow.com/a/2672067
-//
-// "It's C after all, if people want to screw up, they should be allowed to" i agree
-typedef struct node node;
-struct node {
-    void* value;
-    node* prev;
-    node* next;
-};
+typedef struct node {
+    void *value;
+    struct node *prev;
+    struct node *next;
+} node;
 
-// Doubly Linked List
 typedef struct {
-    // dont touch this, use `dll_head`
-    node* _head;
-    // dont touch this, use `dll_tail`
-    node* _tail;
-} dll;
+	// Best not to touch these manually.
+    node *head, *tail;
+} doubly_linked_list;
 
-dll* dll_create(void);
+doubly_linked_list *dll_new(void);
 
-// Free all allocated nodes, but not values.
-void dll_destroy(dll* ll);
+void dll_free(doubly_linked_list *);
 
-// Retrieve head of dll. This is provided in case operations individual nodes
-// leave `ll._head` incorrect
-node* dll_head(dll* ll);
+node *dll_prepend(doubly_linked_list *, void *value);
 
-// Retrieve tail of dll. This is provided in case operations individual nodes
-// leave `ll._tail` incorrect
-node* dll_tail(dll* ll);
+node *dll_append(doubly_linked_list *, void *value);
 
-// Prepend node with `value` to head of dll. Returns NULL if out of memory
-node* dll_prepend(dll* ll, void* value);
+node *dll_find(doubly_linked_list *, void *value);
 
-// Append node with `value` to tail of dll. Returns NULL if out of memory
-node* dll_append(dll* ll, void* value);
+node *dll_insert_after(doubly_linked_list *, node *, void *value);
 
-// Drop tail of dll. Returns NULL if empty
-void* dll_pop(dll* ll);
-
-// Find node from `cur` with value `value`, equality tested with `cmp`.
-// Returns NULL if not found
-node* dll_find_from(node* cur, void* value, bool (*cmp) (void*, void*));
-
-// Insert node with `value` to before node `n`. Returns NULL if out of memory
-node* dll_insert_before(node* n, void* val);
-
-// Insert node with `value` to after node `n`. Returns NULL if out of memory
-node* dll_insert_after(node* n, void* val);
-
-size_t dll_length(dll* ll);
-
-// not necessary but for the sake of convenience
-typedef struct {
-    void* value;
-
-    // Don't use change this field directly.
-    node* _node;
-} dlli;
-
-// Return new dll iterator (for use with dll_next).
-dlli dll_iterator(dll* ll);
-
-// Move iterator to next item in dll, update iterator's value to current item,
-// and return true. If there are no more items, return false. Don't modify the
-// dll during iteration.
-bool dll_next(dlli* it);
+void dll_remove(doubly_linked_list *, node *);
 
 #endif

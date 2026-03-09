@@ -1,6 +1,8 @@
-FILES = test_dll.c dll.c
-OUTFILE = test_dll
-CFLAGS = -g -Wall -Wextra -Werror -o ${OUTFILE}
+FILES = dll.c
+CFLAGS = -g -Wall -Wextra -Werror
 
-test_dll: ${FILES} Makefile
-	@ gcc ${CFLAGS} ${FILES}
+TEST_BIN = test_dll
+
+${TEST_BIN}: ${FILES} dll.h test_dll.c Makefile
+	gcc ${CFLAGS} -o ${TEST_BIN} ${FILES} test_dll.c
+	@ valgrind --leak-check=full ./${TEST_BIN}
