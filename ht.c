@@ -2,26 +2,22 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define INITIAL_CAPACITY 16
 
-hash_table *ht_new(void)
+void ht_init(hash_table *table)
 {
-    hash_table *table = malloc(sizeof(hash_table));
-    if (table == NULL) return NULL;
-
     table->length = 0;
     table->capacity = INITIAL_CAPACITY;
     table->entries = calloc(INITIAL_CAPACITY, sizeof(hash_table_entry));
     if (table->entries == NULL)
     {
-        free(table);
-        return NULL;
+        fprintf(stderr, "could not allocate hash table entries");
+        exit(1);
     }
-
-    return table;
 }
 
 void ht_free(hash_table *table)
@@ -31,7 +27,6 @@ void ht_free(hash_table *table)
         free((void *)table->entries[i].key);
     }
     free(table->entries);
-    free(table);
 }
 
 static uint64_t hash_key(const char *key)

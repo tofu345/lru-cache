@@ -3,20 +3,13 @@
 #include <assert.h>
 #include <stdlib.h>
 
-doubly_linked_list *dll_new(void)
+void dll_init(doubly_linked_list *list)
 {
-    return calloc(1, sizeof(doubly_linked_list));
+    *list = (doubly_linked_list){0};
 }
 
 void dll_free(doubly_linked_list *list)
 {
-    if (list->head == NULL)
-	{
-        assert(list->tail == NULL);
-        free(list);
-        return;
-    }
-
     node *cur = list->head;
     while (cur != NULL)
 	{
@@ -24,19 +17,17 @@ void dll_free(doubly_linked_list *list)
         free(cur);
         cur = next;
     }
-    free(list);
 }
 
-node *dll_prepend(doubly_linked_list *list, void *value)
+node *dll_prepend(doubly_linked_list *list, void *data)
 {
     node *new = malloc(sizeof(node));
     if (new == NULL) return NULL;
-    new->value = value;
+    new->data = data;
 	new->prev = NULL;
 
     if (list->head == NULL)
 	{
-        assert(list->tail == NULL);
 		new->next = NULL;
         list->tail = new;
     }
@@ -51,16 +42,15 @@ node *dll_prepend(doubly_linked_list *list, void *value)
 	return new;
 }
 
-node *dll_append(doubly_linked_list *list, void *value)
+node *dll_append(doubly_linked_list *list, void *data)
 {
     node *new = malloc(sizeof(node));
     if (new == NULL) return NULL;
-    new->value = value;
+    new->data = data;
 	new->next = NULL;
 
     if (list->tail == NULL)
 	{
-        assert(list->head == NULL);
 		new->prev = NULL;
 		list->head = new;
     }
@@ -75,24 +65,24 @@ node *dll_append(doubly_linked_list *list, void *value)
 	return new;
 }
 
-node *dll_find(doubly_linked_list *list, void *value)
+node *dll_find(doubly_linked_list *list, void *data)
 {
 	node *cur = list->head;
 	while (cur != NULL)
 	{
-		if (cur->value == value) return cur;
+		if (cur->data == data) return cur;
 		cur = cur->next;
 	}
 	return NULL;
 }
 
-node *dll_insert_after(doubly_linked_list *list, node *n, void *value)
+node *dll_insert_after(doubly_linked_list *list, node *n, void *data)
 {
     assert(n != NULL && "cannot insert NULL node");
 
     node *new = malloc(sizeof(node));
     if (new == NULL) return NULL;
-    new->value = value;
+    new->data = data;
 	new->prev = n;
 	new->next = n->next;
 
@@ -106,10 +96,8 @@ node *dll_insert_after(doubly_linked_list *list, node *n, void *value)
 	return new;
 }
 
-void dll_remove(doubly_linked_list *list, node *n)
+static void _dll_remove(doubly_linked_list *list, node *n)
 {
-    assert(n != NULL && "cannot remove NULL node");
-
 	if (n->prev != NULL)
 		n->prev->next = n->next;
 	else
@@ -119,7 +107,27 @@ void dll_remove(doubly_linked_list *list, node *n)
 		n->next->prev = n->prev;
 	else
 		list->tail = n->prev;
+}
 
-    list->length--;
+void dll_remove(doubly_linked_list *list, node *n)
+{
+    assert(n != NULL && "cannot remove NULL node");
+
+    _dll_remove(list, n);
 	free(n);
+    list->length--;
+}
+
+void dll_move_to_head(doubly_linked_list *list, node *n)
+{
+    assert(n != NULL && "cannot remove NULL node");
+    assert(list->head != NULL && "cannot move to NULL head");
+
+    if (n == list->head) return;
+
+    _dll_remove(list, n);
+    n->next = list->head;
+    n->prev = NULL;
+    list->head->prev = n;
+    list->head = n;
 }

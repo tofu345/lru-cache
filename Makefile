@@ -1,14 +1,20 @@
 CFLAGS = -g -Wall -Wextra -Werror
-DEST = ./build
 
-OBJS = $(DEST)/dll.o $(DEST)/ht.o
+BUILDDIR = ./build
+
+OBJS = $(addprefix $(BUILDDIR)/, dll.o ht.o lru.o)
+
+all: $(BUILDDIR) tests
+
+$(BUILDDIR):
+	mkdir $(BUILDDIR)
+
+$(BUILDDIR)/%.o: %.c %.h
+	cc $(CFLAGS) -c -o $@ $<
 
 tests: tests.c $(OBJS)
-	cc ${CFLAGS} -o $(DEST)/$@ $(OBJS) tests.c
-	@ valgrind --leak-check=full $(DEST)/$@
-
-$(OBJS): $(DEST)/%.o: %.c %.h
-	cc $(CFLAGS) -c $< -o $@
+	@ cc ${CFLAGS} -o $(BUILDDIR)/$@ $(OBJS) tests.c
+	@ valgrind --leak-check=full $(BUILDDIR)/$@
 
 clean:
-	rm -f $(OBJS) $(DEST)/tests
+	rm -rf build

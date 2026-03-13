@@ -16,7 +16,7 @@ typedef struct {
            capacity; // number of items in hash table
 } hash_table;
 
-hash_table *ht_new(void);
+void ht_init(hash_table *);
 
 void ht_free(hash_table *);
 
