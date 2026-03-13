@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 typedef struct node {
     void *value;
@@ -13,6 +14,7 @@ typedef struct node {
 typedef struct {
     // Best not to change these manually.
     node *head, *tail;
+    uint64_t length;
 } doubly_linked_list;
 
 doubly_linked_list *dll_new(void);

@@ -47,6 +47,7 @@ node *dll_prepend(doubly_linked_list *list, void *value)
 	}
 
 	list->head = new;
+    list->length++;
 	return new;
 }
 
@@ -70,6 +71,7 @@ node *dll_append(doubly_linked_list *list, void *value)
 	}
 
 	list->tail = new;
+    list->length++;
 	return new;
 }
 
@@ -86,7 +88,7 @@ node *dll_find(doubly_linked_list *list, void *value)
 
 node *dll_insert_after(doubly_linked_list *list, node *n, void *value)
 {
-	assert(n != NULL);
+    assert(n != NULL && "cannot insert NULL node");
 
     node *new = malloc(sizeof(node));
     if (new == NULL) return NULL;
@@ -100,11 +102,14 @@ node *dll_insert_after(doubly_linked_list *list, node *n, void *value)
 		list->tail = new;
 
 	n->next = new;
+    list->length++;
 	return new;
 }
 
 void dll_remove(doubly_linked_list *list, node *n)
 {
+    assert(n != NULL && "cannot remove NULL node");
+
 	if (n->prev != NULL)
 		n->prev->next = n->next;
 	else
@@ -115,5 +120,6 @@ void dll_remove(doubly_linked_list *list, node *n)
 	else
 		list->tail = n->prev;
 
+    list->length--;
 	free(n);
 }

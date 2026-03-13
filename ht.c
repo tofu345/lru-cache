@@ -45,11 +45,15 @@ static uint64_t hash_key(const char *key)
     return hash;
 }
 
-// get `hash_table_entry *` where key is or could be located
+// get `hash_table_entry` where key is or could be located,
+// stores hash of [key] in [keyHash] if not NULL.
 hash_table_entry *
-get_entry(hash_table_entry *entries, size_t capacity, const char *key)
+get_entry(hash_table_entry *entries, size_t capacity, const char *key,
+          uint64_t *keyHash)
 {
     uint64_t hash = hash_key(key);
+    if (keyHash != NULL) *keyHash = hash;
+
     size_t index = (size_t)(hash & (uint64_t)(capacity - 1));
 
     // loop until an empty entry
@@ -71,7 +75,9 @@ get_entry(hash_table_entry *entries, size_t capacity, const char *key)
 
 void *ht_get(hash_table *table, const char *key)
 {
-    hash_table_entry *entry = get_entry(table->entries, table->capacity, key);
+    assert(key != NULL);
+    hash_table_entry *entry =
+        get_entry(table->entries, table->capacity, key, NULL);
     if (entry->key == NULL) return NULL;
     return entry->value;
 }
@@ -80,7 +86,7 @@ static const char *
 set_entry(hash_table_entry *entries, size_t *length, size_t capacity,
           const char *key, void *value)
 {
-    hash_table_entry *entry = get_entry(entries, capacity, key);
+    hash_table_entry *entry = get_entry(entries, capacity, key, NULL);
     if (entry->key != NULL)
     {
         entry->value = value;
@@ -134,6 +140,41 @@ const char *ht_set(hash_table *table, const char *key, void *value)
 
     return set_entry(table->entries, &table->length, table->capacity,
                      key, value);
+}
+
+void ht_remove(hash_table *table, const char *key)
+{
+    assert(key != NULL);
+
+    uint64_t hash;
+    hash_table_entry *entry =
+        get_entry(table->entries, table->capacity, key, &hash);
+    if (entry->key == NULL) return;
+
+    // find last collision
+    size_t index = entry - table->entries;
+    size_t last = index + 1;
+    if (last >= table->capacity) last = 0;
+
+    while (table->entries[last].key != NULL)
+    {
+        if (hash_key(table->entries[last].key) != hash)
+        {
+            // the previous entry was the last collision
+            last--;
+            break;
+        }
+
+        last++;
+        if (last >= table->capacity)
+            last = 0;
+    }
+
+    // set [key] entry to last collision
+    free((void *)entry->key);
+    table->entries[index] = table->entries[last];
+    table->entries[last].key = NULL;
+    table->length--;
 }
 
 hti ht_iterator(hash_table *table)

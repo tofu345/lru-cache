@@ -24,6 +24,8 @@ void *ht_get(hash_table *, const char *key);
 
 const char *ht_set(hash_table *, const char *key, void *value);
 
+void ht_remove(hash_table *table, const char *key);
+
 typedef struct {
     // i know you won't listen but don't change these fields directly.
     hash_table *_table;
