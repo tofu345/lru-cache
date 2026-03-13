@@ -17,4 +17,4 @@ tests: tests.c $(OBJS)
 	@ valgrind --leak-check=full $(BUILDDIR)/$@
 
 clean:
-	rm -rf build
+	rm -rf $(BUILDDIR)
