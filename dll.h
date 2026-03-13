@@ -1,5 +1,5 @@
-#ifndef DLL_H
-#define DLL_H
+#ifndef DOUBLY_LINKED_LIST_H
+#define DOUBLY_LINKED_LIST_H
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -11,7 +11,7 @@ typedef struct node {
 } node;
 
 typedef struct {
-	// Best not to touch these manually.
+    // Best not to change these manually.
     node *head, *tail;
 } doubly_linked_list;
 
@@ -29,4 +29,4 @@ node *dll_insert_after(doubly_linked_list *, node *, void *value);
 
 void dll_remove(doubly_linked_list *, node *);
 
-#endif
+#endif // DOUBLY_LINKED_LIST_H

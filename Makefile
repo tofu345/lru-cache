@@ -1,8 +1,16 @@
-FILES = dll.c
 CFLAGS = -g -Wall -Wextra -Werror
+DEST = ./build
 
-TEST_BIN = test_dll
+OBJS = $(DEST)/dll.o $(DEST)/ht.o
 
-${TEST_BIN}: ${FILES} dll.h test_dll.c Makefile
-	gcc ${CFLAGS} -o ${TEST_BIN} ${FILES} test_dll.c
-	@ valgrind --leak-check=full ./${TEST_BIN}
+all: $(OBJS)
+
+$(OBJS): $(DEST)/%.o: %.c %.h
+	cc $(CFLAGS) -c $< -o $@
+
+tests: tests.c $(OBJS)
+	cc ${CFLAGS} -o $(DEST)/$@ $(OBJS) tests.c
+	@ valgrind --leak-check=full $(DEST)/$@
+
+clean:
+	rm -f $(OBJS) $(DEST)/tests
