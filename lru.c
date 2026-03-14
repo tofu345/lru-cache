@@ -44,6 +44,7 @@ void lru_put(lru_cache *cache, const char *key, void *value)
     if (n != NULL)
     {
         dll_move_to_head(dll, n);
+        ((lru_data *)n->data)->value = value;
         return;
     }
 

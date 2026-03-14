@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Lots of rooms for improvement in these tests...
+
 const char foo[] = "foo";
 const char bar[] = "bar";
 const char baz[] = "baz";
@@ -209,23 +211,29 @@ static void test_lru(void)
 
     lru_put(&cache, foo, (void *)foo);
     assert(lru_dll_is(&cache, (const char *[]){ foo, NULL }));
+    assert(lru_get(&cache, foo) != NULL);
 
     lru_put(&cache, bar, (void *)bar);
     assert(lru_dll_is(&cache, (const char *[]){ bar, foo, NULL }));
+    assert(lru_get(&cache, bar) != NULL);
 
     lru_put(&cache, baz, (void *)baz);
     assert(lru_dll_is(&cache, (const char *[]){ baz, bar, foo, NULL }));
+    assert(lru_get(&cache, baz) != NULL);
 
     lru_put(&cache, fizzbuzz, (void *)fizzbuzz);
     assert(lru_dll_is(&cache, (const char *[]){ fizzbuzz, baz, bar, NULL }));
     assert(lru_get(&cache, foo) == NULL);
+    assert(lru_get(&cache, fizzbuzz) != NULL);
 
     lru_put(&cache, baz, (void *)baz);
     assert(lru_dll_is(&cache, (const char *[]){ baz, fizzbuzz, bar, NULL }));
+    assert(lru_get(&cache, baz) != NULL);
 
     lru_put(&cache, foo, (void *)foo);
     assert(lru_dll_is(&cache, (const char *[]){ foo, baz, fizzbuzz, NULL }));
     assert(lru_get(&cache, bar) == NULL);
+    assert(lru_get(&cache, foo) != NULL);
 
     lru_free(&cache);
 }
